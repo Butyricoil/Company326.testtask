@@ -111,51 +111,185 @@ Assets/
 - Code follows SOLID principles
 - Documentation is available in code comments
 
-## Тестовое задание для компании Cifkor
+## 💻 Code Usage Examples
 
-## Описание задания:
-Приложение состоит из двух вкладок, между которыми можно переключаться через нижнюю навигационную панель:
-- Первая вкладка отображает данные о погоде;
-- Вторая вкладка — список пород собак;
-  
-## В работе реализовано:
-- Интерфейс с двумя вкладками, между которыми можно переключаться;
-- Заготовки для взаимодействия с сервером и организации очереди запросов (требует доработки);
-- Основная структура приложения согласно ТЗ;
+### Web Request Service
 
-## Что не удалось реализовать:
-- Не получилось десериализовать JSON-ответы;
-- Не успел интегрировать сервис очереди вызовов данных с сервера;
-- Не занимался оптимизацией (пул объектов, фабрики);
-- Не успел добавить анимации с помощью DOTween;
+```csharp
+// Initialize the service
+private WebRequestService _webRequestService = new WebRequestService();
 
-## 🧾 Как запустить
-1. Клонируйте репозиторий: git clone https://github.com/DjKarp/Cifkor
-2. Откройте проект в Unity (или другой нужной IDE).
-3. Убедитесь, что установлены все зависимости пакетов (Zenject, DOTween, если потребуется в будущем).
-4. Запустите любую сцену. Загрузка всё равно будет происходить через Boostrap.
+// Example 1: Get weather data
+public void GetWeatherData()
+{
+    _webRequestService.RequestJSON(
+        "https://api.weather.gov/gridpoints/TOP/32,81/forecast",
+        progress => Debug.Log($"Download progress: {progress}"),
+        response => {
+            if (response != null)
+            {
+                // Process weather data
+                Debug.Log($"Weather data received: {response}");
+            }
+        },
+        () => Debug.Log("Weather request completed"),
+        true, // High priority
+        RequestType.Weather
+    );
+}
 
-## 🌍 Готовые билды:
-РС - http://redleggames.com/Games/Cifkor_Testtask_PC.zip
+// Example 2: Get dog breeds list
+public void GetDogBreeds()
+{
+    _webRequestService.RequestJSON(
+        "https://api.thedogapi.com/v1/breeds",
+        progress => Debug.Log($"Download progress: {progress}"),
+        response => {
+            if (response != null)
+            {
+                // Process breeds data
+                Debug.Log($"Breeds data received: {response}");
+            }
+        },
+        () => Debug.Log("Breeds request completed"),
+        false, // Normal priority
+        RequestType.DogBreeds
+    );
+}
 
-## 📁 Структура проекта
-<pre> ```Assets/
-├── Prefab/             # Префабы страниц приложения и кнопок для страницы с породами собак
-├── Scenes/             # Все сцены игры 
-│   ├── Bootstrap       # Разгоночная сцена, с неё запускается приложение
-│   ├── Application     # Сцена самого приложения
-├── Scripts/
-│   ├── DogBreeds/      # Скрипты страницы с породами собак
-│   ├── EntryPoint/     # Точка входа
-│   ├── Json/           # Сериализированные классы для десериализации с JSON
-│   ├── MVP/            # Компоненты MVP работы приложения
-│   ├── Util/           # Скрипты помощники
-│   └── Web/            # Сервис скачивания данных с сервера и работа с очередью запросов
-└── Zenject/            
-│   ├── Installers/     # Инсталлеры для SceneContext
-│   ├── Prefab/         # Префабы инсталлеров
-│   ├── Resources/      # Папка хранения ProjectContext
-│   ├── Signals/        # Сигналы
-└── 
-``` </pre>
----
+// Example 3: Get specific breed details
+public void GetBreedDetails(string breedId)
+{
+    _webRequestService.RequestJSON(
+        $"https://api.thedogapi.com/v1/breeds/{breedId}",
+        progress => Debug.Log($"Download progress: {progress}"),
+        response => {
+            if (response != null)
+            {
+                // Process breed details
+                Debug.Log($"Breed details received: {response}");
+            }
+        },
+        () => Debug.Log("Breed details request completed"),
+        true, // High priority
+        RequestType.DogBreedDetails
+    );
+}
+
+// Example 4: Cancel specific type of requests
+public void CancelWeatherRequests()
+{
+    _webRequestService.CancelRequestsByType(RequestType.Weather);
+}
+
+// Example 5: Cancel all requests
+public void CancelAllRequests()
+{
+    _webRequestService.CancelAllRequests();
+}
+```
+
+### Task Service
+
+```csharp
+// Initialize the service
+private TaskService _taskService = new TaskService();
+
+// Example 1: Add a high priority task
+public void AddHighPriorityTask()
+{
+    _taskService.AddTask(
+        YourCoroutine(),
+        () => Debug.Log("Task completed"),
+        true, // High priority
+        RequestType.Weather
+    );
+}
+
+// Example 2: Add a normal priority task
+public void AddNormalPriorityTask()
+{
+    _taskService.AddTask(
+        YourCoroutine(),
+        () => Debug.Log("Task completed"),
+        false, // Normal priority
+        RequestType.DogBreeds
+    );
+}
+
+// Example 3: Cancel tasks by type
+public void CancelTasksByType()
+{
+    _taskService.CancelTasksByType(RequestType.Weather);
+}
+
+// Example 4: Stop current task
+public void StopCurrentTask()
+{
+    _taskService.StopCurrentTask();
+}
+
+// Example 5: Clear all tasks
+public void ClearAllTasks()
+{
+    _taskService.Clear();
+}
+```
+
+### Task Implementation
+
+```csharp
+// Example 1: Create and start a task
+public void CreateAndStartTask()
+{
+    var task = Task.Create(YourCoroutine())
+        .Subscribe(() => Debug.Log("Task completed"));
+    
+    task.Start();
+}
+
+// Example 2: Create a task with type
+public void CreateTypedTask()
+{
+    var task = Task.Create(YourCoroutine());
+    task.Type = RequestType.Weather;
+    task.Subscribe(() => Debug.Log("Task completed"))
+        .Start();
+}
+
+// Example 3: Stop a task
+public void StopTask(Task task)
+{
+    task.Stop();
+}
+```
+
+## 🔄 Request Queue Behavior
+
+The request queue system ensures that:
+1. Requests are executed sequentially
+2. High priority requests are processed first
+3. Requests can be cancelled by type
+4. Failed requests are retried automatically
+5. Resources are properly cleaned up
+
+Example queue behavior:
+```csharp
+// These requests will be executed in order:
+// 1. High priority weather request
+// 2. High priority breed details request
+// 3. Normal priority breeds list request
+
+_webRequestService.RequestJSON(weatherUrl, ..., true, RequestType.Weather);
+_webRequestService.RequestJSON(breedDetailsUrl, ..., true, RequestType.DogBreedDetails);
+_webRequestService.RequestJSON(breedsListUrl, ..., false, RequestType.DogBreeds);
+```
+
+## ⚠️ Important Notes
+
+1. Always cancel requests when switching tabs or leaving scenes
+2. Use appropriate request types for proper queue management
+3. Handle null responses in callbacks
+4. Monitor request progress for large downloads
+5. Clean up resources by calling CancelAllRequests when needed
+
